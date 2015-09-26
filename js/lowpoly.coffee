@@ -1,14 +1,14 @@
 
 Coords =
-  createGrid: (width, height, resolution, variance) ->
-    offset = (-1*resolution) - variance
+  createGrid: (xoffset, yoffset, width, height, resolution, variance) ->
+    # offset = (-1*resolution) - variance
 
     # create grid of vertices
     vertices = []
     for x in [0 .. Math.floor(width/resolution)+3]
       row = []
       for y in [0 .. Math.floor(height/resolution)+3]
-        row.push new Two.Vector (x*resolution)+(variance*Math.random())+offset, (y*resolution)+(variance*Math.random())+offset
+        row.push new Two.Vector (x*resolution)+(variance*Math.random())+xoffset, (y*resolution)+(variance*Math.random())+yoffset
       vertices.push row
     return vertices
 
@@ -278,25 +278,36 @@ Draw =
 
 
 
-class PolyBackground
+class Mesh
 
-  constructor: (elem, resolution, variance, colors, bgColor) ->
+  constructor: (two, {x, y, width, height, resolution}) ->
     @resolution = resolution
-    @variance = variance
-    @colors = colors
+    @variance = 0
+    @colors = []
     @vectors = null
     @triangles = null
-    @bgColor = bgColor
-    @elem = elem
-    @two = new Two({
-        'type': Two.Types.svg
-        # width:@elem.offsetWidth
-        # height:@elem.offsetHeight
-        # fullscreen: true
-     }).appendTo(elem)
+    @bgColor = [0,0,0]
+    @two = two
+    @width = width
+    @height = height
+    @x = x
+    @y = y
+
 
     @bind()
     @resize = ->
+
+
+  varyBy: (v) ->
+    @variance = v
+    # @varyY = y
+    return this
+
+  # bgColor: (color) ->
+    # @bgColor = color
+    # return this
+
+ 
 
   bind: () ->
     drawWithcontext = () => @draw()
@@ -307,29 +318,23 @@ class PolyBackground
 
   draw: () ->
     @two.clear()
-    @two.width = @elem.offsetWidth
-    @two.height = @elem.offsetHeight
-    @resize()
+    # @two.width = @elem.offsetWidth
+    # @two.height = @elem.offsetHeight
+    # @resize()
     # for c in @colors
       # c.calcXY @two.width, @two.height
 
     if @vectors isnt null
       @vectors = null
       @triangles = null
-    @vectors = Coords.createGrid @two.width, @two.height, @resolution, @variance
+    @vectors = Coords.createGrid @x, @y, @width, @height, @resolution, @variance
     @triangles = Draw.triangles @two, @vectors, @colors, @bgColor
     @two.update()
 
     
 
   animate: (delta, cyclePerMS) ->
-    # timeFactor = 0.0005
-    #
     totalT = 0
-
-    # Math.PI / 2
-    # prevDelta = 0
-
     anim = @two.bind 'update', (frameCount, dt) =>
       # This code is called everytime two.update() is called.
       # Effectively 60 times per second.
@@ -367,9 +372,7 @@ class PolyBackground
       #     tri.stroke = color
     anim.play();  # Finally, start the animation loop
 
-# drawBackground()
-# window.onresize = -> drawBackground()
 
 window.ColorPoint = ColorPoint
 window.Easing = Easing
-window.PolyBackground = PolyBackground
+window.Mesh = Mesh
